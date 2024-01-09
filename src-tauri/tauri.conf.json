@@ -1,4 +1,5 @@
 {
+  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "build": {
     "beforeBuildCommand": "npm run build",
     "beforeDevCommand": "npm run dev",
@@ -11,7 +12,30 @@
   },
   "tauri": {
     "allowlist": {
-      "all": false
+      "path": {
+        "all": true
+      },
+      "fs": {
+        "all": true,
+        "scope": ["**"]
+      },
+      "shell": {
+        "sidecar": true,
+        "scope": [
+          {
+            "name": "../node/node-template",
+            "sidecar": true,
+            "args": [
+              "key",
+              "generate-node-key",
+              "--file",
+              {
+                "validator": "\\S+"
+              }
+            ]
+          }
+        ]
+      }
     },
     "bundle": {
       "active": true,
@@ -20,7 +44,9 @@
       "deb": {
         "depends": []
       },
-      "externalBin": [],
+      "externalBin": [
+        "../node/node-template"
+      ],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
