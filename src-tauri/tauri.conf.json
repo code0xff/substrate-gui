@@ -25,14 +25,7 @@
           {
             "name": "../node/node-template",
             "sidecar": true,
-            "args": [
-              "key",
-              "generate-node-key",
-              "--file",
-              {
-                "validator": "\\S+"
-              }
-            ]
+            "args": true
           }
         ]
       }

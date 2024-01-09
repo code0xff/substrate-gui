@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 
-	import { Command } from '@tauri-apps/api/shell';
+	import { Child, Command } from '@tauri-apps/api/shell';
 	import { appConfigDir } from '@tauri-apps/api/path';
 	import { createDir, exists } from '@tauri-apps/api/fs';
 	import { Separator } from '@/lib/components/ui/separator';
 
 	let key: string = '';
+	let child: Child;
 
 	async function generateNodeKey() {
 		const appConfigDirPath = await appConfigDir();
@@ -19,15 +20,47 @@
 			'--file',
 			`${appConfigDirPath}/node-key`
 		]);
-		const {code, stderr} = await command.execute();
-    if (code === 0) {
-      key = stderr;
-    }
+		const { code, stderr } = await command.execute();
+		if (code === 0) {
+			key = stderr;
+		}
+	}
+
+	async function runNode() {
+		const appConfigDirPath = await appConfigDir();
+		const nodeKey = `${appConfigDirPath}/node-key`;
+		if (!(await exists(nodeKey))) {
+			console.error('key does not exist');
+			return;
+		}
+		const command = Command.sidecar('../node/node-template', [
+			'--dev',
+			'--node-key-file',
+			`${appConfigDirPath}/node-key`
+		]);
+		command.on('error', (e) => {
+			console.error(e);
+		});
+		command.stdout.on('data', (data) => {
+			console.log(data);
+		});
+		command.stderr.on('data', (data) => {
+			console.log(data);
+		});
+		child = await command.spawn();
+	}
+
+	async function stopNode() {
+		if (child) {
+			await child.kill();
+		}
 	}
 </script>
 
 <div>
-	<Button class="m-3" on:click={generateNodeKey}>Node Key</Button>
+	<Button class="m-3" on:click={generateNodeKey}>Generate Key</Button>
+	<Button class="m-3" on:click={runNode}>Run Node</Button>
+	<Button class="m-3" on:click={stopNode}>Stop Node</Button>
 	<Separator />
 	<p>{key}</p>
 </div>
