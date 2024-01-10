@@ -38,14 +38,17 @@
 			'--node-key-file',
 			`${appConfigDirPath}/node-key`
 		]);
+		command.on('close', (data) => {
+			console.log(data);
+		});
 		command.on('error', (e) => {
 			console.error(e);
 		});
-		command.stdout.on('data', (data) => {
-			console.log(data);
+		command.stdout.on('data', (line) => {
+			console.log(line);
 		});
-		command.stderr.on('data', (data) => {
-			console.log(data);
+		command.stderr.on('data', (line) => {
+			console.log(line);
 		});
 		child = await command.spawn();
 	}
