@@ -4,9 +4,9 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Progress } from '@/lib/components/ui/progress';
 	import { Toaster } from '@/lib/components/ui/sonner';
-	
+
 	import { passwordStrength as checkPasswordStrength } from 'check-password-strength';
-	import { toast } from "svelte-sonner";
+	import { toast } from 'svelte-sonner';
 
 	let password: string = '';
 	let confirmPassword: string = '';
@@ -15,7 +15,7 @@
 	let confirmMessage: string = 'Please enter confirm password.';
 	let passwordValid: boolean = false;
 
-	async function checkPassword() {
+	function checkPassword() {
 		if (password.length > 0) {
 			const { id, contains } = checkPasswordStrength(password);
 			const passwordCondition = ['lowercase', 'uppercase', 'symbol', 'number'];

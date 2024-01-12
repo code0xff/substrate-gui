@@ -7,9 +7,9 @@
 
 <div class="m-0 h-full w-full p-0">
 	{#if !password}
-		<SignUp />
+	<SignIn />
 	{:else}
-		<SignIn />
+	<SignUp />
 	{/if}
 </div>
 
