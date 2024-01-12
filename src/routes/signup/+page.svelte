@@ -11,12 +11,13 @@
 	import { appConfigDir } from '@tauri-apps/api/path';
 	import { goto } from '$app/navigation';
 	import crypto from 'crypto-js';
+	import { _ } from 'svelte-i18n';
 
 	let password: string = '';
 	let confirmPassword: string = '';
 	let passwordStrength: number = 0;
-	let passwordMessage: string = 'Please enter your password.';
-	let confirmMessage: string = 'Please enter confirm password.';
+	let passwordMessage: string = $_('signup.password.message.default');
+	let confirmMessage: string = $_('signup.confirmation.message.default');
 	let passwordValid: boolean = false;
 
 	function checkPassword() {
@@ -33,22 +34,22 @@
 				if (passwordCondition.length > 0) {
 					passwordMessage = `Please include ${passwordCondition.join(', ')}.`;
 				} else {
-					passwordMessage = 'Strong password!';
+					passwordMessage = $_('signup.password.message.success');
 				}
 			}
 		} else {
 			passwordStrength = 0;
-			passwordMessage = 'Please enter your password.';
+			passwordMessage = $_('signup.password.message.default');
 		}
 
 		if (confirmPassword.length > 0) {
 			if (password === confirmPassword) {
-				confirmMessage = `Password and confirm password match exactly.`;
+				confirmMessage = $_('signup.confirmation.message.success');
 			} else {
-				confirmMessage = `Password and confirm password don't match each other.`;
+				confirmMessage = $_('signup.confirmation.message.fail');
 			}
 		} else {
-			confirmMessage = 'Please enter confirm password.';
+			confirmMessage = $_('signup.confirmation.message.default');
 		}
 
 		passwordValid = verifyPassword();
@@ -67,7 +68,7 @@
 		if (verifyPassword()) {
 			await initialize();
 		} else {
-			toast.error(`Password and confirm password don't match each other.`);
+			toast.error($_('signup.confirm.toast.error'));
 		}
 	}
 
@@ -87,11 +88,8 @@
 <div class="flex justify-center md:h-screen">
 	<Card.Root class="m-4 border-none md:m-auto md:w-[480px] md:border-solid">
 		<Card.Header>
-			<Card.Title>Create a strong password</Card.Title>
-			<Card.Description>
-				Create a strong password of at least 10 characters, combining uppercase letters, lowercase
-				letters, numbers, and symbols.</Card.Description
-			>
+			<Card.Title>{$_('signup.header.title')}</Card.Title>
+			<Card.Description>{$_('signup.header.description')}</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<div class="grid w-full items-center gap-4">

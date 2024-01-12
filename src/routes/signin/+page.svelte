@@ -9,6 +9,7 @@
 	import { appConfigDir } from '@tauri-apps/api/path';
 	import { toast } from 'svelte-sonner';
 	import crypto from 'crypto-js';
+	import { _ } from 'svelte-i18n';
 
 	let password: string = '';
 	let passwordValid: boolean = false;
@@ -24,7 +25,7 @@
 			if (config.password === crypto.SHA256(password).toString()) {
 				await goto('/node');
 			} else {
-				toast.error('You entered invalid password.');
+				toast.error($_('signin.confirm.error'));
 			}
 		}
 	}
@@ -37,8 +38,8 @@
 <div class="flex justify-center md:h-screen">
 	<Card.Root class="m-4 border-none md:m-auto md:w-[480px] md:border-solid">
 		<Card.Header>
-			<Card.Title>Enter your password</Card.Title>
-			<Card.Description>Enter your password for authentication.</Card.Description>
+			<Card.Title>{$_('signin.header.title')}</Card.Title>
+			<Card.Description>{$_('signin.header.description')}</Card.Description>
 		</Card.Header>
 		<Card.Content>
 			<div class="grid w-full items-center gap-4">
