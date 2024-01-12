@@ -7,6 +7,10 @@
 
 	import { passwordStrength as checkPasswordStrength } from 'check-password-strength';
 	import { toast } from 'svelte-sonner';
+	import { exists, createDir, writeTextFile } from '@tauri-apps/api/fs';
+	import { appConfigDir } from '@tauri-apps/api/path';
+	import { goto } from '$app/navigation';
+	import crypto from 'crypto-js';
 
 	let password: string = '';
 	let confirmPassword: string = '';
@@ -59,11 +63,24 @@
 		);
 	}
 
-	function confirm() {
+	async function confirm() {
 		if (verifyPassword()) {
+			await initialize();
 		} else {
 			toast.error(`Password and confirm password don't match each other.`);
 		}
+	}
+
+	async function initialize() {
+		const appConfigDirPath = await appConfigDir();
+		if (!(await exists(appConfigDirPath))) {
+			await createDir(appConfigDirPath);
+		}
+		await writeTextFile(
+			`${appConfigDirPath}/config.json`,
+			JSON.stringify({ password: crypto.SHA256(password).toString() })
+		);
+		await goto('/node');
 	}
 </script>
 
