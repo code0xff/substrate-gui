@@ -55,11 +55,7 @@
 			</div>
 		</Card.Content>
 		<Card.Footer class="flex justify-end">
-			{#if passwordValid}
-				<Button class="w-full md:w-auto" on:click={confirm}>Enter</Button>
-			{:else}
-				<Button class="w-full md:w-auto" disabled>Enter</Button>
-			{/if}
+			<Button class="w-full md:w-auto" on:click={confirm} disabled={!passwordValid}>Enter</Button>
 		</Card.Footer>
 	</Card.Root>
 	<Toaster />
