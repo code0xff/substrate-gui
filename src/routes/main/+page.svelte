@@ -45,7 +45,7 @@
 				}}
 			/>
 		</aside>
-		<div class="w-full px-4 py-2">
+		<div class="w-full px-4">
 			{#if sidebarNavItems[selected].path === '/main/node'}
 				<Node />
 			{:else if sidebarNavItems[selected].path === '/main/dashboard'}
