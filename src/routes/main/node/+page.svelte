@@ -3,36 +3,17 @@
 	import { Button } from '$lib/components/ui/button';
 
 	import { AudioWaveform, Coins, Cpu, Dumbbell, MemoryStick, Package } from 'lucide-svelte';
-	import { invoke } from '@tauri-apps/api/tauri';
+	import type { NodeStatus } from '$lib/types';
 
-	let nodeOn: boolean = false;
-	let cpuUsage: number = 0.0;
-	let memory: number = 0;
+	export let status: NodeStatus;
 
-	let jobId: number = 0;
-
-	async function startNode() {
-		nodeOn = !nodeOn;
-
-		if (nodeOn) {
-			jobId = setInterval(() => {
-				invoke('check_status', { pid: 0 })
-					.then((status: any) => {
-						cpuUsage = status.cpu_usage;
-						memory = status.memory;
-					})
-					.finally(console.error);
-			}, 1000);
-		} else {
-			clearInterval(jobId);
-		}
-	}
+	export let handleNode: () => void;
 </script>
 
 <div>
 	<div class="w-full">
-		<Button class="w-full" variant={nodeOn ? 'default' : 'outline'} on:click={startNode}
-			>{nodeOn ? 'Node Stop' : 'Node Start'}</Button
+		<Button class="w-full" variant={status.on ? 'default' : 'outline'} on:click={handleNode}
+			>{status.on ? 'Node Stop' : 'Node Start'}</Button
 		>
 	</div>
 	<div class="grid gap-4 pt-4 md:grid-cols-1 lg:grid-cols-2">
@@ -42,7 +23,7 @@
 				<Cpu class="h-4 w-4 text-muted-foreground" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold">{cpuUsage}</div>
+				<div class="text-2xl font-bold">{status.cpuUsage.toFixed(2)} %</div>
 				<p class="text-xs text-muted-foreground"></p>
 			</Card.Content>
 		</Card.Root>
@@ -52,7 +33,7 @@
 				<MemoryStick class="h-4 w-4 text-muted-foreground" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold">{memory}</div>
+				<div class="text-2xl font-bold">{status.memory.toLocaleString()} Bytes</div>
 				<p class="text-xs text-muted-foreground"></p>
 			</Card.Content>
 		</Card.Root>
