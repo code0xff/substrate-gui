@@ -5,7 +5,9 @@
       "description": "Enter your password for authentication."
     },
     "confirm": {
-      "error": "You entered invalid password."
+      "toast": {
+        "error": "You entered invalid password."
+      }
     }
   },
   "signup": {
@@ -15,16 +17,14 @@
         "success": "Strong password!"
       }
     },
-    "confirmation": {
+    "confirm": {
+      "toast": {
+        "error": "Password and confirm password don't match each other."
+      },
       "message": {
         "default": "Please enter confirm password.",
         "success": "Password and confirm password match exactly.",
         "fail": "Password and confirm password don't match each other."
-      }
-    },
-    "confirm": {
-      "toast": {
-        "error": "Password and confirmation password don't match each other."
       }
     },
     "header": {

@@ -25,7 +25,7 @@
 			if (config.password === crypto.SHA256(password).toString()) {
 				await goto('/node');
 			} else {
-				toast.error($_('signin.confirm.error'));
+				toast.error($_('signin.confirm.toast.error'));
 			}
 		}
 	}

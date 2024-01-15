@@ -17,7 +17,7 @@
 	let confirmPassword: string = '';
 	let passwordStrength: number = 0;
 	let passwordMessage: string = $_('signup.password.message.default');
-	let confirmMessage: string = $_('signup.confirmation.message.default');
+	let confirmMessage: string = $_('signup.confirm.message.default');
 	let passwordValid: boolean = false;
 
 	function checkPassword() {
@@ -44,12 +44,12 @@
 
 		if (confirmPassword.length > 0) {
 			if (password === confirmPassword) {
-				confirmMessage = $_('signup.confirmation.message.success');
+				confirmMessage = $_('signup.confirm.message.success');
 			} else {
-				confirmMessage = $_('signup.confirmation.message.fail');
+				confirmMessage = $_('signup.confirm.message.fail');
 			}
 		} else {
-			confirmMessage = $_('signup.confirmation.message.default');
+			confirmMessage = $_('signup.confirm.message.default');
 		}
 
 		passwordValid = verifyPassword();
