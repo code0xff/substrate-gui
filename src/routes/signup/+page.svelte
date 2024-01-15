@@ -2,8 +2,8 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Progress } from '@/lib/components/ui/progress';
-	import { Toaster } from '@/lib/components/ui/sonner';
+	import { Progress } from '$lib/components/ui/progress';
+	import { Toaster } from '$lib/components/ui/sonner';
 
 	import { passwordStrength as checkPasswordStrength } from 'check-password-strength';
 	import { toast } from 'svelte-sonner';
@@ -81,7 +81,7 @@
 			`${appConfigDirPath}/config.json`,
 			JSON.stringify({ password: crypto.SHA256(password).toString() })
 		);
-		await goto('/node');
+		await goto('/main');
 	}
 </script>
 

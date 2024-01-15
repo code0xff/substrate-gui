@@ -3,7 +3,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import * as Card from '$lib/components/ui/card';
 	import { Input } from '$lib/components/ui/input';
-	import { Toaster } from '@/lib/components/ui/sonner';
+	import { Toaster } from '$lib/components/ui/sonner';
 
 	import { exists, readTextFile } from '@tauri-apps/api/fs';
 	import { appConfigDir } from '@tauri-apps/api/path';
@@ -23,7 +23,7 @@
 			}
 			const config = JSON.parse(await readTextFile(`${appConfigDirPath}/config.json`));
 			if (config.password === crypto.SHA256(password).toString()) {
-				await goto('/node');
+				await goto('/main');
 			} else {
 				toast.error($_('signin.confirm.toast.error'));
 			}

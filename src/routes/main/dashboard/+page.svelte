@@ -2,7 +2,7 @@
 </script>
 
 <div>
-	<p>Node Controller</p>
+	<p>Dashboard</p>
 </div>
 
 <style>
