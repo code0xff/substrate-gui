@@ -22,7 +22,7 @@
 				selectMenu(index);
 			}}
 		>
-			<Icons name={item.icon} width="24" height="24" />
+			<Icons name={item.icon} />
 			<span class="lg:block hidden">
 				&nbsp;
 				{item.title}
