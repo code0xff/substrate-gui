@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { SidebarNav } from '$lib/components/ui/sidebar-nav';
 	import { Separator } from '$lib/components/ui/separator';
-	import type { NodeStatus } from '$lib/types';
+	import { Toaster } from '$lib/components/ui/sonner';
+	import { NodeStatus } from '$lib/types';
 
 	import { invoke } from '@tauri-apps/api/tauri';
+	import { toast } from 'svelte-sonner';
+	import { _ } from 'svelte-i18n';
 
 	import Node from './node/+page.svelte';
 	import Dashboard from './dashboard/+page.svelte';
@@ -31,29 +34,41 @@
 	];
 	let selected: number = 0;
 
-	let status: NodeStatus = {
-		on: false,
-		iid: 0,
-		cpuUsage: 0.0,
-		memory: 0
-	};
+	let status: NodeStatus = NodeStatus.default();
 
 	async function handleNode() {
 		status.on = !status.on;
-
 		if (status.on) {
-			status.iid = setInterval(() => {
-				invoke('check_status', { pid: 0 })
-					.then((result: any) => {
-						status.cpuUsage = result.cpu_usage;
-						status.memory = result.memory;
-					})
-					.finally(console.error);
+			status.iid = setInterval(async () => {
+				try {
+					const { cpuUsage, memory, startTime } = await invoke<NodeStatus>('check_status', {
+						pid: 0
+					});
+					status.cpuUsage = cpuUsage;
+					status.memory = memory;
+					status.startTime = startTime;
+				} catch (e: any) {
+					if (status.iid !== 0) {
+						clearInterval(status.iid);
+					}
+					status.iid = 0;
+					status.cpuUsage = 0.0;
+					status.memory = 0;
+					status.startTime = 0;
+
+					console.error(e);
+					toast.error($_('main.handle_node.toast.error'));
+				}
 			}, 1000);
 		} else {
-			clearInterval(status.iid);
+			if (status.iid !== 0) {
+				clearInterval(status.iid);
+			}
+
+			status.iid = 0;
 			status.cpuUsage = 0.0;
 			status.memory = 0;
+			status.startTime = 0;
 		}
 	}
 </script>
@@ -85,6 +100,7 @@
 		</div>
 	</div>
 </div>
+<Toaster />
 
 <style>
 </style>

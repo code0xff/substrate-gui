@@ -6,7 +6,6 @@
 	import type { NodeStatus } from '$lib/types';
 
 	export let status: NodeStatus;
-
 	export let handleNode: () => void;
 </script>
 
