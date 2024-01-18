@@ -1,73 +1,35 @@
 <script lang="ts">
-	import { Button } from '$lib/components/ui/button';
-	import * as Card from '$lib/components/ui/card';
-	import * as Select from '$lib/components/ui/select';
-	import { Input } from '$lib/components/ui/input';
-	import { Label } from '$lib/components/ui/label';
+	import SignUp from './signup/+page.svelte';
+	import SignIn from './signin/+page.svelte';
 
-	const frameworks = [
-		{
-			value: 'sveltekit',
-			label: 'SvelteKit'
-		},
-		{
-			value: 'next',
-			label: 'Next.js'
-		},
-		{
-			value: 'astro',
-			label: 'Astro'
-		},
-		{
-			value: 'nuxt',
-			label: 'Nuxt.js'
+	import { appConfigDir } from '@tauri-apps/api/path';
+	import { exists, createDir, readTextFile } from '@tauri-apps/api/fs';
+
+	async function load() {
+		const appConfigDirPath = await appConfigDir();
+		if (!(await exists(appConfigDirPath))) {
+			await createDir(appConfigDirPath);
+			return false;
 		}
-	];
+		if (!(await exists(`${appConfigDirPath}/config.json`))) {
+			return false;
+		}
+		const config = JSON.parse(await readTextFile(`${appConfigDirPath}/config.json`));
+		if (config.password) {
+			return true;
+		}
+	}
 </script>
 
-<main class="container">
-	<Card.Root class="w-[350px]">
-		<Card.Header>
-			<Card.Title>Create project</Card.Title>
-			<Card.Description>Deploy your new project in one-click.</Card.Description>
-		</Card.Header>
-		<Card.Content>
-			<form>
-				<div class="grid w-full items-center gap-4">
-					<div class="flex flex-col space-y-1.5">
-						<Label for="name">Name</Label>
-						<Input id="name" placeholder="Name of your project" />
-					</div>
-					<div class="flex flex-col space-y-1.5">
-						<Label for="framework">Framework</Label>
-						<Select.Root>
-							<Select.Trigger id="framework">
-								<Select.Value placeholder="Select" />
-							</Select.Trigger>
-							<Select.Content>
-								{#each frameworks as framework}
-									<Select.Item value={framework.value} label={framework.label}
-										>{framework.label}</Select.Item
-									>
-								{/each}
-							</Select.Content>
-						</Select.Root>
-					</div>
-				</div>
-			</form>
-		</Card.Content>
-		<Card.Footer class="flex justify-between">
-			<Button variant="outline">Cancel</Button>
-			<Button>Deploy</Button>
-		</Card.Footer>
-	</Card.Root>
-</main>
+<div class="m-0 h-full w-full p-0">
+	{#await load() then initialized}
+		{#if initialized}
+			<SignIn />
+		{:else}
+			<SignUp />
+		{/if}
+	{/await}
+</div>
 
 <style>
-	.container {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		height: 100vh;
-	}
 </style>

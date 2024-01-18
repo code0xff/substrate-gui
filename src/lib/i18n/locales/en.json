@@ -1,0 +1,42 @@
+{
+  "main": {
+    "handle_node": {
+      "toast": {
+        "error": "Failed to start Node."
+      }
+    }
+  },
+  "signin": {
+    "header": {
+      "title": "Enter your password",
+      "description": "Enter your password for authentication."
+    },
+    "confirm": {
+      "toast": {
+        "error": "You entered invalid password."
+      }
+    }
+  },
+  "signup": {
+    "password": {
+      "message": {
+        "default": "Please enter your password.",
+        "success": "Strong password!"
+      }
+    },
+    "confirm": {
+      "toast": {
+        "error": "Password and confirm password don't match each other."
+      },
+      "message": {
+        "default": "Please enter confirm password.",
+        "success": "Password and confirm password match exactly.",
+        "fail": "Password and confirm password don't match each other."
+      }
+    },
+    "header": {
+      "title": "Create a strong password",
+      "description": "Create a strong password of at least 10 characters, combining uppercase letters, lowercase letters, numbers, and symbols."
+    }
+  }
+}
