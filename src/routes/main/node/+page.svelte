@@ -35,7 +35,9 @@
 				<MemoryStick class="h-4 w-4 text-muted-foreground" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold">{status.memory.toLocaleString()} Bytes</div>
+				<div class="text-2xl font-bold">
+					{(status.memory / 1024 / 1024).toFixed(2)} MBytes
+				</div>
 				<p class="text-xs text-muted-foreground"></p>
 			</Card.Content>
 		</Card.Root>
@@ -45,7 +47,7 @@
 				<AudioWaveform class="h-4 w-4 text-muted-foreground" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold">{lhr.toFixed(2)} H/s</div>
+				<div class="text-2xl font-bold">{lhr} H/s</div>
 				<p class="text-xs text-muted-foreground"></p>
 			</Card.Content>
 		</Card.Root>
@@ -55,7 +57,7 @@
 				<Antenna class="h-4 w-4 text-muted-foreground" />
 			</Card.Header>
 			<Card.Content>
-				<div class="text-2xl font-bold">{nhr.toFixed(2)} H/s</div>
+				<div class="text-2xl font-bold">{nhr} H/s</div>
 				<p class="text-xs text-muted-foreground"></p>
 			</Card.Content>
 		</Card.Root>

@@ -38,8 +38,8 @@
 
 	let status: NodeStatus = NodeStatus.default();
 	let logs: string[] = [];
-	let lhr: number = 0.0;
-	let nhr: number = 0.0;
+	let lhr: number = 0;
+	let nhr: number = 0;
 	let child: Child;
 
 	async function handleLog(log: string) {
@@ -51,10 +51,10 @@
 
 		if (log.indexOf('Local hashrate: ') !== -1 && log.indexOf('network hashrate: ') !== -1) {
 			let index = log.indexOf('Local hashrate: ') + 'Local hashrate: '.length;
-			lhr =  parseFloat(log.slice(index, log.indexOf(' H/s')));
+			lhr = parseFloat(log.slice(index, log.indexOf(' H/s')));
 
 			index = log.indexOf('network hashrate: ') + 'network hashrate: '.length;
-			nhr =  parseFloat(log.slice(index, log.indexOf(' H/s', index)));
+			nhr = parseFloat(log.slice(index, log.indexOf(' H/s', index)));
 		}
 	}
 
@@ -62,6 +62,12 @@
 		status.on = !status.on;
 		if (status.on) {
 			logs = [];
+			status.cpuUsage = 0.0;
+			status.memory = 0;
+			status.startTime = 0;
+			lhr = 0;
+			nhr = 0;
+
 			const command = Command.sidecar('../node/pocd', ['--dev', '--disable-weak-subjectivity']);
 			command.stdout.on('data', handleLog);
 			command.stderr.on('data', handleLog);
@@ -82,9 +88,6 @@
 						clearInterval(status.iid);
 					}
 					status.iid = 0;
-					status.cpuUsage = 0.0;
-					status.memory = 0;
-					status.startTime = 0;
 
 					console.error(e);
 					toast.error($_('main.handle_node.toast.error'));
@@ -99,9 +102,6 @@
 			}
 
 			status.iid = 0;
-			status.cpuUsage = 0.0;
-			status.memory = 0;
-			status.startTime = 0;
 		}
 	}
 </script>
