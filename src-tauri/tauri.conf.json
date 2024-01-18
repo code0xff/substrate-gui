@@ -17,17 +17,13 @@
       },
       "fs": {
         "all": true,
-        "scope": ["**"]
+        "scope": [
+          "**"
+        ]
       },
       "shell": {
         "sidecar": true,
-        "scope": [
-          {
-            "name": "../node/node-template",
-            "sidecar": true,
-            "args": true
-          }
-        ]
+        "scope": []
       }
     },
     "bundle": {
@@ -37,9 +33,7 @@
       "deb": {
         "depends": []
       },
-      "externalBin": [
-        "../node/node-template"
-      ],
+      "externalBin": [],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",

@@ -11,7 +11,6 @@ struct ProcessStatus {
 
 #[tauri::command]
 async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
-    let pid = std::process::id();
     let mut system = sysinfo::System::new_all();
     system.refresh_all();
     system.refresh_all();
