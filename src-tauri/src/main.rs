@@ -14,8 +14,10 @@ async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
     let mut system = sysinfo::System::new_all();
     system.refresh_all();
     system.refresh_all();
+
     if let Some(process) = system.process(sysinfo::Pid::from_u32(pid)) {
         let cpu_usage = process.cpu_usage();
+        println!("{}", cpu_usage);
         let memory = process.memory();
         let start_time = process.start_time();
         let status = ProcessStatus {

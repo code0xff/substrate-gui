@@ -12,6 +12,8 @@
 	import Dashboard from './dashboard/+page.svelte';
 	import Setting from './setting/+page.svelte';
 
+	import { Command, Child } from '@tauri-apps/api/shell';
+
 	const sidebarNavItems = [
 		{
 			title: 'Node',
@@ -35,14 +37,42 @@
 	let selected: number = 0;
 
 	let status: NodeStatus = NodeStatus.default();
+	let logs: string[] = [];
+	let lhr: number = 0.0;
+	let nhr: number = 0.0;
+	let child: Child;
+
+	async function handleLog(log: string) {
+		while (logs.length >= 50) {
+			logs.pop();
+		}
+		logs.unshift(log);
+		logs = [...logs];
+
+		if (log.indexOf('Local hashrate: ') !== -1 && log.indexOf('network hashrate: ') !== -1) {
+			let index = log.indexOf('Local hashrate: ') + 'Local hashrate: '.length;
+			lhr =  parseFloat(log.slice(index, log.indexOf(' H/s')));
+
+			index = log.indexOf('network hashrate: ') + 'network hashrate: '.length;
+			nhr =  parseFloat(log.slice(index, log.indexOf(' H/s', index)));
+		}
+	}
 
 	async function handleNode() {
 		status.on = !status.on;
 		if (status.on) {
+			logs = [];
+			const command = Command.sidecar('../node/pocd', ['--dev', '--disable-weak-subjectivity']);
+			command.stdout.on('data', handleLog);
+			command.stderr.on('data', handleLog);
+
+			child = await command.spawn();
+			console.log(child.pid);
+
 			status.iid = setInterval(async () => {
 				try {
 					const { cpuUsage, memory, startTime } = await invoke<NodeStatus>('check_status', {
-						pid: 0
+						pid: child.pid
 					});
 					status.cpuUsage = cpuUsage;
 					status.memory = memory;
@@ -63,6 +93,9 @@
 		} else {
 			if (status.iid !== 0) {
 				clearInterval(status.iid);
+			}
+			if (child) {
+				await child.kill();
 			}
 
 			status.iid = 0;
@@ -91,7 +124,7 @@
 		</aside>
 		<div class="w-full px-4">
 			{#if sidebarNavItems[selected].path === '/main/node'}
-				<Node {status} {handleNode} />
+				<Node {status} {handleNode} {logs} {lhr} {nhr} />
 			{:else if sidebarNavItems[selected].path === '/main/dashboard'}
 				<Dashboard />
 			{:else if sidebarNavItems[selected].path === '/main/setting'}
