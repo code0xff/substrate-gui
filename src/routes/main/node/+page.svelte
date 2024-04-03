@@ -15,7 +15,7 @@
 <div>
 	<div class="w-full">
 		<Button class="w-full" variant={status.on ? 'default' : 'outline'} on:click={handleNode}
-			>{status.on ? 'Node Stop' : 'Node Start'}</Button
+			>{status.on ? 'Stop' : 'Start'} Node</Button
 		>
 	</div>
 	<div class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-4">

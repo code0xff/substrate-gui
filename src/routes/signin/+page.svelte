@@ -33,6 +33,12 @@
 	function checkPassword() {
 		passwordValid = password.length > 0;
 	}
+
+	function submit(e: any) {
+		if (e.key === 'Enter') {
+			confirm();
+		}
+	}
 </script>
 
 <div class="flex justify-center md:h-screen">
@@ -50,6 +56,7 @@
 						placeholder="password"
 						bind:value={password}
 						on:input={checkPassword}
+						on:keydown={passwordValid ? submit : null}
 					/>
 				</div>
 			</div>
