@@ -83,6 +83,12 @@
 		);
 		await goto('/main');
 	}
+
+	function submit(e: any) {
+		if (e.key === 'Enter') {
+			confirm();
+		}
+	}
 </script>
 
 <div class="flex justify-center md:h-screen">
@@ -100,11 +106,18 @@
 						placeholder="password"
 						bind:value={password}
 						on:input={checkPassword}
+						on:keydown={passwordValid ? submit : null}
 					/>
 					<p class="text-sm text-muted-foreground">{passwordMessage}</p>
 				</div>
 				<div class="flex flex-col space-y-1.5" on:input={checkPassword}>
-					<Input id="confirm" type="password" placeholder="confirm" bind:value={confirmPassword} />
+					<Input
+						id="confirm"
+						type="password"
+						placeholder="confirm"
+						bind:value={confirmPassword}
+						on:keydown={passwordValid ? submit : null}
+					/>
 					<p class="text-sm text-muted-foreground">{confirmMessage}</p>
 				</div>
 				<div class="flex flex-col space-y-1.5">

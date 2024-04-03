@@ -23,7 +23,13 @@
       },
       "shell": {
         "sidecar": true,
-        "scope": []
+        "scope": [
+          {
+            "name": "../node/pocd",
+            "sidecar": true,
+            "args": true
+          }
+        ]
       }
     },
     "bundle": {
@@ -33,7 +39,9 @@
       "deb": {
         "depends": []
       },
-      "externalBin": [],
+      "externalBin": [
+        "../node/pocd"
+      ],
       "icon": [
         "icons/32x32.png",
         "icons/128x128.png",
