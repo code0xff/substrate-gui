@@ -1,11 +1,4 @@
 {
-  "main": {
-    "handle_node": {
-      "toast": {
-        "error": "Failed to start Node."
-      }
-    }
-  },
   "signin": {
     "header": {
       "title": "Enter your password",

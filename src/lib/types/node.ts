@@ -1,23 +1,32 @@
+import type { Child } from "@tauri-apps/api/shell";
+import { ApiPromise } from "@polkadot/api";
+
 export class NodeStats {
-    constructor(public on: boolean, public jobId: NodeJS.Timeout | null, public cpuUsage: number, public memory: number, public startTime: number) { }
+    constructor(public on: boolean, public jobId: NodeJS.Timeout | null, public api: ApiPromise | null, public child: Child | null, public cpuUsage: number, public memory: number, public startTime: number) { }
 
     public static default(): NodeStats {
-        return new NodeStats(false, null, 0.0, 0, 0);
+        return new NodeStats(false, null, null, null, 0.0, 0, 0);
     }
 
-    public clear(): NodeStats {
+    public start(): NodeStats {
+        this.on = true;
         this.cpuUsage = 0.0;
         this.memory = 0;
         this.startTime = 0;
         return this;
     }
 
-    public start(): NodeStats {
-        this.on = true;
-        return this;
-    }
-
-    public stop(): NodeStats {
+    public async stop(): Promise<NodeStats> {
+        if (this.api && this.api.isConnected) {
+            await this.api.disconnect();
+        }
+        if (this.jobId) {
+            clearInterval(this.jobId);
+        }
+        if (this.child) {
+            await this.child.kill();
+        }
+        this.jobId = null;
         this.on = false;
         return this;
     }
