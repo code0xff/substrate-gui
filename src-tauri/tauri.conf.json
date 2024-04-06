@@ -34,7 +34,8 @@
             "sidecar": true,
             "args": true
           }
-        ]
+        ],
+        "open": true
       }
     },
     "bundle": {

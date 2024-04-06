@@ -8,6 +8,7 @@
 	import { ScrollText, Dumbbell, CircleUserRound } from 'lucide-svelte';
 	import { ChainInfo, Environment, type MinerStats, type NodeStats } from '$lib/types';
 	import { DisplayCard } from '@/lib/components/card';
+	import { open } from '@tauri-apps/api/shell';
 
 	export let node: NodeStats;
 	export let logs: string[];
@@ -18,6 +19,7 @@
 	export let env: Environment;
 	export let selectPower: any;
 	export let updateEnv: () => Promise<void>;
+	export let endpoint: string;
 
 	const levels = [
 		{ value: 'min', label: 'Min' },
@@ -29,11 +31,15 @@
 </script>
 
 <div>
-	<div class="w-full">
+	<div class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-2">
+		<Button variant={node.on ? 'default' : 'outline'} on:click={node.on ? stopNode : startNode}
+			>{node.on ? 'Stop' : 'Start'} Node</Button
+		>
 		<Button
-			class="w-full"
-			variant={node.on ? 'default' : 'outline'}
-			on:click={node.on ? stopNode : startNode}>{node.on ? 'Stop' : 'Start'} Node</Button
+			disabled={!node.on}
+			on:click={() => {
+				open(endpoint);
+			}}>Open Explore</Button
 		>
 	</div>
 	<div class="w-full">

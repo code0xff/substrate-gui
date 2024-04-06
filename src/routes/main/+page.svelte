@@ -247,6 +247,7 @@
 					{env}
 					selectPower={selectHashcashPower}
 					updateEnv={updateHashcashEnv}
+					endpoint={'https://polkadot.js.org/apps/?rpc=ws://localhost:9944#/explorer'}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/p2pool'}
 				<Node
@@ -272,6 +273,7 @@
 					env={p2pEnv}
 					selectPower={selecP2PoolPower}
 					updateEnv={updateP2PoolEnv}
+					endpoint={'https://polkadot.js.org/apps/?rpc=ws://localhost:10044#/explorer'}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/setting'}
 				<Setting />
