@@ -2,7 +2,7 @@
 	import * as Card from '$lib/components/ui/card';
 	import { LucideIcon } from '@/lib/components/ui/icons';
 
-    export let title: string;
+	export let title: string;
 	export let icon: string;
 	export let contents: any;
 	export let subContents: any;

@@ -30,9 +30,14 @@ async fn check_node_stats(pid: u32) -> Result<ProcessStats, String> {
     }
 }
 
+#[tauri::command]
+async fn max_threads() -> usize {
+    num_cpus::get()
+}
+
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![check_node_stats])
+        .invoke_handler(tauri::generate_handler![check_node_stats, max_threads])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

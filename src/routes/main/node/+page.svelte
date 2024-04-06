@@ -1,10 +1,14 @@
 <script lang="ts">
+	import * as Accordion from '$lib/components/ui/accordion';
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import * as Select from '$lib/components/ui/select';
 
-	import { ScrollText } from 'lucide-svelte';
+	import { ScrollText, Dumbbell, CircleUserRound } from 'lucide-svelte';
 	import { ChainInfo, type MinerStats, type NodeStats } from '$lib/types';
 	import { DisplayCard } from '@/lib/components/card';
+	import type { Selected } from 'bits-ui';
 
 	export let node: NodeStats;
 	export let logs: string[];
@@ -12,6 +16,16 @@
 	export let stopNode: () => Promise<void>;
 	export let miner: MinerStats;
 	export let chain: ChainInfo;
+	export let power: Selected<string>;
+	export let selectPower: any;
+
+	const levels = [
+		{ value: 'min', label: 'Min' },
+		{ value: '25', label: '25%' },
+		{ value: '50', label: '50%' },
+		{ value: '75', label: '75%' },
+		{ value: 'max', label: 'Max' }
+	];
 </script>
 
 <div>
@@ -21,6 +35,48 @@
 			variant={node.on ? 'default' : 'outline'}
 			on:click={node.on ? stopNode : startNode}>{node.on ? 'Stop' : 'Start'} Node</Button
 		>
+	</div>
+	<div class="w-full">
+		<Accordion.Root class="w-full">
+			<Accordion.Item value="item-1">
+				<Accordion.Trigger>Settings</Accordion.Trigger>
+				<Accordion.Content>
+					<div class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-2">
+						<Card.Root>
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+								<Card.Title class="text-sm font-medium">Miner</Card.Title>
+								<CircleUserRound class="h-4 w-4 text-muted-foreground" />
+							</Card.Header>
+							<Card.Content>
+								<Input disabled={node.on} />
+							</Card.Content>
+						</Card.Root>
+						<Card.Root>
+							<Card.Header class="flex flex-row items-center justify-between space-y-0 pb-2">
+								<Card.Title class="text-sm font-medium">Mining power</Card.Title>
+								<Dumbbell class="h-4 w-4 text-muted-foreground" />
+							</Card.Header>
+							<Card.Content>
+								<Select.Root onSelectedChange={selectPower} selected={power} disabled={node.on}>
+									<Select.Trigger class="w-full">
+										<Select.Value placeholder="Select power level for mining" />
+									</Select.Trigger>
+									<Select.Content>
+										<Select.Group>
+											{#each levels as level}
+												<Select.Item value={level.value} label={level.label}
+													>{level.label}</Select.Item
+												>
+											{/each}
+										</Select.Group>
+									</Select.Content>
+								</Select.Root>
+							</Card.Content>
+						</Card.Root>
+					</div>
+				</Accordion.Content>
+			</Accordion.Item>
+		</Accordion.Root>
 	</div>
 	<div class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-4">
 		<DisplayCard

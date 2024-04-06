@@ -10,6 +10,7 @@
 	import { Command } from '@tauri-apps/api/shell';
 	import { ApiPromise, WsProvider } from '@polkadot/api';
 	import type { Header } from '@polkadot/types/interfaces';
+	import type { Selected } from 'bits-ui';
 
 	const sidebarNavItems = [
 		{
@@ -32,16 +33,22 @@
 		}
 	];
 	let selected: number = 0;
+	let maxThreads: number;
+	invoke<number>('max_threads', {}).then((value: number) => {
+		maxThreads = value;
+	});
 
 	let node: NodeStats = NodeStats.default();
 	let miner: MinerStats = MinerStats.default();
 	let chain: ChainInfo = ChainInfo.default();
 	let logs: string[] = [];
+	let power: Selected<string> = { value: 'min', label: 'Min' };
 
 	let p2pNode: NodeStats = NodeStats.default();
 	let p2pMiner: MinerStats = MinerStats.default();
 	let p2pChain: ChainInfo = ChainInfo.default();
 	let p2pLogs: string[] = [];
+	let p2pPower: Selected<string> = { value: 'max', label: 'Max' };
 
 	function updateLogs(logs: string[], log: string): string[] {
 		while (logs.length >= 100) {
@@ -100,6 +107,10 @@
 		node = await node.stop();
 	}
 
+	function selectHashcashPower(selected: Selected<string>) {
+		power = selected;
+	}
+
 	async function startP2Pool(program: string, args: string[], endpoint: string) {
 		p2pNode = p2pNode.start();
 		p2pLogs = [];
@@ -139,6 +150,20 @@
 	async function stopP2Pool() {
 		p2pNode = await p2pNode.stop();
 	}
+
+	function selecP2PoolPower(selected: Selected<string>) {
+		p2pPower = selected;
+	}
+
+	function calculateThreads(power: Selected<string>): number {
+		if (power.value === 'min') {
+			return 1;
+		} else if (power.value === 'max') {
+			return Math.max(maxThreads - 1, 1);
+		} else {
+			return Math.floor((maxThreads * parseInt(power.value)) / 100);
+		}
+	}
 </script>
 
 <div class="p-4">
@@ -162,11 +187,17 @@
 				<Node
 					{node}
 					startNode={() =>
-						startHashcash('../node/hashcash', ['--dev', '--alice'], 'ws://localhost:9944')}
+						startHashcash(
+							'../node/hashcash',
+							['--dev', '--alice', '--threads', `${calculateThreads(power)}`],
+							'ws://localhost:9944'
+						)}
 					stopNode={stopHashcash}
 					{logs}
 					{miner}
 					{chain}
+					{power}
+					selectPower={selectHashcashPower}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/p2pool'}
 				<Node
@@ -174,13 +205,15 @@
 					startNode={() =>
 						startP2Pool(
 							'../node/p2pool',
-							['--dev', '--bob', '--threads', '8'],
+							['--dev', '--bob', '--threads', `${calculateThreads(p2pPower)}`],
 							'ws://localhost:10044'
 						)}
 					stopNode={stopP2Pool}
 					logs={p2pLogs}
 					miner={p2pMiner}
 					chain={p2pChain}
+					power={p2pPower}
+					selectPower={selecP2PoolPower}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/setting'}
 				<Setting />
