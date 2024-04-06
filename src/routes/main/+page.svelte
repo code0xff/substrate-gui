@@ -2,7 +2,7 @@
 	import { SidebarNav } from '$lib/components/ui/sidebar-nav';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Toaster } from '$lib/components/ui/sonner';
-	import { NodeStats, MinerStats, ChainInfo } from '$lib/types';
+	import { NodeStats, MinerStats, ChainInfo, Environment } from '$lib/types';
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { _ } from 'svelte-i18n';
 	import Node from './node/+page.svelte';
@@ -11,6 +11,10 @@
 	import { ApiPromise, WsProvider } from '@polkadot/api';
 	import type { Header } from '@polkadot/types/interfaces';
 	import type { Selected } from 'bits-ui';
+	import { appConfigDir, appDataDir } from '@tauri-apps/api/path';
+	import { decodeAddress, encodeAddress } from '@polkadot/keyring';
+	import { hexToU8a, isHex } from '@polkadot/util';
+	import { toast } from 'svelte-sonner';
 
 	const sidebarNavItems = [
 		{
@@ -34,21 +38,30 @@
 	];
 	let selected: number = 0;
 	let maxThreads: number;
-	invoke<number>('max_threads', {}).then((value: number) => {
-		maxThreads = value;
-	});
+
+	let env: Environment;
+	let p2pEnv: Environment;
+	let appConfigDirPath: string;
+	let appDataDirPath: string;
+
+	(async () => {
+		maxThreads = await invoke<number>('max_threads', {});
+		appConfigDirPath = await appConfigDir();
+		appDataDirPath = await appDataDir();
+
+		env = await Environment.load(appConfigDirPath, 'hashcash.json');
+		p2pEnv = await Environment.load(appConfigDirPath, 'p2pool.json');
+	})();
 
 	let node: NodeStats = NodeStats.default();
 	let miner: MinerStats = MinerStats.default();
 	let chain: ChainInfo = ChainInfo.default();
 	let logs: string[] = [];
-	let power: Selected<string> = { value: 'min', label: 'Min' };
 
 	let p2pNode: NodeStats = NodeStats.default();
 	let p2pMiner: MinerStats = MinerStats.default();
 	let p2pChain: ChainInfo = ChainInfo.default();
 	let p2pLogs: string[] = [];
-	let p2pPower: Selected<string> = { value: 'max', label: 'Max' };
 
 	function updateLogs(logs: string[], log: string): string[] {
 		while (logs.length >= 100) {
@@ -67,7 +80,20 @@
 		}
 	}
 
+	function isValidAddress(address: string) {
+		try {
+			encodeAddress(isHex(address) ? hexToU8a(address) : decodeAddress(address));
+			return true;
+		} catch (error) {
+			return false;
+		}
+	}
+
 	async function startHashcash(program: string, args: string[], endpoint: string) {
+		if (!isValidAddress(env.miner)) {
+			toast.warning('Invalid address');
+			return;
+		}
 		node = node.start();
 		logs = [];
 		miner = miner.clear();
@@ -107,11 +133,20 @@
 		node = await node.stop();
 	}
 
-	function selectHashcashPower(selected: Selected<string>) {
-		power = selected;
+	async function selectHashcashPower(selected: Selected<string>) {
+		env.power = selected;
+		await updateHashcashEnv();
+	}
+
+	async function updateHashcashEnv() {
+		await Environment.save(env, appConfigDirPath, 'hashcash.json');
 	}
 
 	async function startP2Pool(program: string, args: string[], endpoint: string) {
+		if (!isValidAddress(p2pEnv.miner)) {
+			toast.warning('Invalid address');
+			return;
+		}
 		p2pNode = p2pNode.start();
 		p2pLogs = [];
 		p2pMiner = p2pMiner.clear();
@@ -151,8 +186,13 @@
 		p2pNode = await p2pNode.stop();
 	}
 
-	function selecP2PoolPower(selected: Selected<string>) {
-		p2pPower = selected;
+	async function selecP2PoolPower(selected: Selected<string>) {
+		p2pEnv.power = selected;
+		await updateP2PoolEnv();
+	}
+
+	async function updateP2PoolEnv() {
+		await Environment.save(p2pEnv, appConfigDirPath, 'p2pool.json');
 	}
 
 	function calculateThreads(power: Selected<string>): number {
@@ -189,15 +229,24 @@
 					startNode={() =>
 						startHashcash(
 							'../node/hashcash',
-							['--dev', '--alice', '--threads', `${calculateThreads(power)}`],
+							[
+								'--dev',
+								'--base-path',
+								`${appDataDirPath}/hashcash`,
+								'--author',
+								env.miner,
+								'--threads',
+								`${calculateThreads(env.power)}`
+							],
 							'ws://localhost:9944'
 						)}
 					stopNode={stopHashcash}
 					{logs}
 					{miner}
 					{chain}
-					{power}
+					{env}
 					selectPower={selectHashcashPower}
+					updateEnv={updateHashcashEnv}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/p2pool'}
 				<Node
@@ -205,15 +254,24 @@
 					startNode={() =>
 						startP2Pool(
 							'../node/p2pool',
-							['--dev', '--bob', '--threads', `${calculateThreads(p2pPower)}`],
+							[
+								'--dev',
+								'--base-path',
+								`${appDataDirPath}/p2pool`,
+								'--author',
+								p2pEnv.miner,
+								'--threads',
+								`${calculateThreads(p2pEnv.power)}`
+							],
 							'ws://localhost:10044'
 						)}
 					stopNode={stopP2Pool}
 					logs={p2pLogs}
 					miner={p2pMiner}
 					chain={p2pChain}
-					power={p2pPower}
+					env={p2pEnv}
 					selectPower={selecP2PoolPower}
+					updateEnv={updateP2PoolEnv}
 				/>
 			{:else if sidebarNavItems[selected].path === '/main/setting'}
 				<Setting />

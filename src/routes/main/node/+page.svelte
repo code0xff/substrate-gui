@@ -6,9 +6,8 @@
 	import * as Select from '$lib/components/ui/select';
 
 	import { ScrollText, Dumbbell, CircleUserRound } from 'lucide-svelte';
-	import { ChainInfo, type MinerStats, type NodeStats } from '$lib/types';
+	import { ChainInfo, Environment, type MinerStats, type NodeStats } from '$lib/types';
 	import { DisplayCard } from '@/lib/components/card';
-	import type { Selected } from 'bits-ui';
 
 	export let node: NodeStats;
 	export let logs: string[];
@@ -16,8 +15,9 @@
 	export let stopNode: () => Promise<void>;
 	export let miner: MinerStats;
 	export let chain: ChainInfo;
-	export let power: Selected<string>;
+	export let env: Environment;
 	export let selectPower: any;
+	export let updateEnv: () => Promise<void>;
 
 	const levels = [
 		{ value: 'min', label: 'Min' },
@@ -39,7 +39,7 @@
 	<div class="w-full">
 		<Accordion.Root class="w-full">
 			<Accordion.Item value="item-1">
-				<Accordion.Trigger>Settings</Accordion.Trigger>
+				<Accordion.Trigger>Environments</Accordion.Trigger>
 				<Accordion.Content>
 					<div class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-2">
 						<Card.Root>
@@ -48,7 +48,7 @@
 								<CircleUserRound class="h-4 w-4 text-muted-foreground" />
 							</Card.Header>
 							<Card.Content>
-								<Input disabled={node.on} />
+								<Input disabled={node.on} bind:value={env.miner} on:change={updateEnv} />
 							</Card.Content>
 						</Card.Root>
 						<Card.Root>
@@ -57,7 +57,7 @@
 								<Dumbbell class="h-4 w-4 text-muted-foreground" />
 							</Card.Header>
 							<Card.Content>
-								<Select.Root onSelectedChange={selectPower} selected={power} disabled={node.on}>
+								<Select.Root onSelectedChange={selectPower} selected={env.power} disabled={node.on}>
 									<Select.Trigger class="w-full">
 										<Select.Value placeholder="Select power level for mining" />
 									</Select.Trigger>
