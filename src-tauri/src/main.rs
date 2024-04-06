@@ -3,14 +3,14 @@
 
 #[derive(serde::Deserialize, serde::Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-struct ProcessStatus {
+struct ProcessStats {
     cpu_usage: f32,
     memory: u64,
     start_time: u64,
 }
 
 #[tauri::command]
-async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
+async fn check_node_stats(pid: u32) -> Result<ProcessStats, String> {
     let mut system = sysinfo::System::new_all();
     system.refresh_all();
     system.refresh_all();
@@ -19,7 +19,7 @@ async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
         let cpu_usage = process.cpu_usage();
         let memory = process.memory();
         let start_time = process.start_time();
-        let status = ProcessStatus {
+        let status = ProcessStats {
             cpu_usage,
             memory,
             start_time,
@@ -32,7 +32,7 @@ async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![check_status])
+        .invoke_handler(tauri::generate_handler![check_node_stats])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

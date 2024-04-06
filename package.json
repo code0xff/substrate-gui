@@ -43,6 +43,8 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@polkadot/api": "^10.12.6",
+		"@polkadot/types": "^10.12.6",
 		"bits-ui": "^0.13.6",
 		"check-password-strength": "^2.0.7",
 		"clsx": "^2.1.0",

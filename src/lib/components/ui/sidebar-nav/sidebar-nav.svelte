@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
-	import Icons from '../icons/icons.svelte';
+	import { LucideIcon } from '$lib/components/ui/icons';
 	let className: string | undefined | null = undefined;
 	export let selected: number;
 	export let selectMenu: (index: number) => void;
@@ -22,8 +22,8 @@
 				selectMenu(index);
 			}}
 		>
-			<Icons name={item.icon} />
-			<span class="lg:block hidden">
+			<LucideIcon name={item.icon} />
+			<span class="hidden lg:block">
 				&nbsp;
 				{item.title}
 			</span>

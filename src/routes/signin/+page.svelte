@@ -13,8 +13,10 @@
 
 	let password: string = '';
 	let passwordValid: boolean = false;
+	let processing: boolean = false;
 
 	async function confirm() {
+		processing = true;
 		if (passwordValid) {
 			const appConfigDirPath = await appConfigDir();
 			if (!(await exists(`${appConfigDirPath}/config.json`))) {
@@ -25,6 +27,7 @@
 			if (config.password === crypto.SHA256(password).toString()) {
 				await goto('/main');
 			} else {
+				processing = false;
 				toast.error($_('signin.confirm.toast.error'));
 			}
 		}
@@ -54,6 +57,7 @@
 						id="password"
 						type="password"
 						placeholder="password"
+						disabled={processing}
 						bind:value={password}
 						on:input={checkPassword}
 						on:keydown={passwordValid ? submit : null}
@@ -62,7 +66,9 @@
 			</div>
 		</Card.Content>
 		<Card.Footer class="flex justify-end">
-			<Button class="w-full md:w-auto" on:click={confirm} disabled={!passwordValid}>Enter</Button>
+			<Button class="w-full md:w-auto" on:click={confirm} disabled={processing || !passwordValid}
+				>Enter</Button
+			>
 		</Card.Footer>
 	</Card.Root>
 	<Toaster />

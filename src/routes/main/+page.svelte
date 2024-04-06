@@ -2,107 +2,116 @@
 	import { SidebarNav } from '$lib/components/ui/sidebar-nav';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Toaster } from '$lib/components/ui/sonner';
-	import { NodeStatus } from '$lib/types';
+	import { NodeStats, MinerStats, ChainInfo } from '$lib/types';
 
 	import { invoke } from '@tauri-apps/api/tauri';
 	import { toast } from 'svelte-sonner';
 	import { _ } from 'svelte-i18n';
 
 	import Node from './node/+page.svelte';
-	import Dashboard from './dashboard/+page.svelte';
 	import Setting from './setting/+page.svelte';
 
 	import { Command, Child } from '@tauri-apps/api/shell';
 
+	import { ApiPromise, WsProvider } from '@polkadot/api';
+	import type { Header } from '@polkadot/types/interfaces';
+
 	const sidebarNavItems = [
 		{
-			title: 'Node',
-			path: '/main/node',
-			description: 'Node controller',
-			icon: 'network'
-		},
-		{
-			title: 'Dashboard',
-			path: '/main/dashboard',
-			description: 'Dashboard for node',
-			icon: 'layout-dashboard'
+			title: 'Hashcash',
+			path: '/main/hashcash',
+			description: 'Hashcash node controller',
+			icon: 'Coins'
 		},
 		{
 			title: 'Setting',
 			path: '/main/setting',
 			description: 'Node client setting',
-			icon: 'cog'
+			icon: 'Cog'
 		}
 	];
 	let selected: number = 0;
 
-	let status: NodeStatus = NodeStatus.default();
+	let node: NodeStats = NodeStats.default();
+	let miner: MinerStats = MinerStats.default();
+	let chain: ChainInfo = ChainInfo.default();
 	let logs: string[] = [];
-	let lhr: number = 0;
-	let nhr: number = 0;
 	let child: Child;
+	let api: ApiPromise;
 
 	async function handleLog(log: string) {
-		while (logs.length >= 50) {
+		while (logs.length >= 100) {
 			logs.pop();
 		}
 		logs.unshift(log);
 		logs = [...logs];
 
-		if (log.indexOf('Local hashrate: ') !== -1 && log.indexOf('network hashrate: ') !== -1) {
-			let index = log.indexOf('Local hashrate: ') + 'Local hashrate: '.length;
-			lhr = parseFloat(log.slice(index, log.indexOf(' H/s')));
+		if (log.indexOf('Local Hashrate: ') !== -1 && log.indexOf('Network Hashrate: ') !== -1) {
+			let index = log.indexOf('Local Hashrate: ') + 'Local Hashrate: '.length;
+			miner.local = parseInt(log.slice(index, log.indexOf(' H/s')));
 
-			index = log.indexOf('network hashrate: ') + 'network hashrate: '.length;
-			nhr = parseFloat(log.slice(index, log.indexOf(' H/s', index)));
+			index = log.indexOf('Network Hashrate: ') + 'Network Hashrate: '.length;
+			miner.network = parseInt(log.slice(index, log.indexOf(' H/s', index)));
 		}
 	}
 
-	async function handleNode() {
-		status.on = !status.on;
-		if (status.on) {
-			logs = [];
-			status.cpuUsage = 0.0;
-			status.memory = 0;
-			status.startTime = 0;
-			lhr = 0;
-			nhr = 0;
+	async function spawnProgram(program: string, args: string[]): Promise<void> {
+		const command = Command.sidecar(program, args);
+		command.stdout.on('data', handleLog);
+		command.stderr.on('data', handleLog);
 
-			const command = Command.sidecar('../node/pocd', ['--dev', '--disable-weak-subjectivity']);
-			command.stdout.on('data', handleLog);
-			command.stderr.on('data', handleLog);
+		child = await command.spawn();
+	}
 
-			child = await command.spawn();
-			console.log(child.pid);
-
-			status.iid = setInterval(async () => {
-				try {
-					const { cpuUsage, memory, startTime } = await invoke<NodeStatus>('check_status', {
-						pid: child.pid
-					});
-					status.cpuUsage = cpuUsage;
-					status.memory = memory;
-					status.startTime = startTime;
-				} catch (e: any) {
-					if (status.iid !== 0) {
-						clearInterval(status.iid);
-					}
-					status.iid = 0;
-
-					console.error(e);
-					toast.error($_('main.handle_node.toast.error'));
-				}
-			}, 1000);
-		} else {
-			if (status.iid !== 0) {
-				clearInterval(status.iid);
+	function checkNode(): NodeJS.Timeout {
+		return setInterval(async () => {
+			try {
+				const newStats = await invoke<NodeStats>('check_node_stats', {
+					pid: child.pid
+				});
+				node = node.update(newStats);
+			} catch (e: any) {
+				console.error(e);
+				toast.error($_('main.handle_node.toast.error'));
 			}
-			if (child) {
-				await child.kill();
-			}
+		}, 1000);
+	}
 
-			status.iid = 0;
+	async function checkChain(endpoint: string): Promise<void> {
+		const provider = new WsProvider(endpoint);
+		api = await ApiPromise.create({ provider });
+		api.rpc.chain.subscribeNewHeads(async (header: Header) => {
+			try {
+				chain = await chain.update(api, header);
+			} catch (e: any) {
+				console.error(`Failed to update chain info. error: ${e}`);
+			}
+		});
+	}
+
+	async function startNode(program: string, args: string[], endpoint: string) {
+		node = node.start();
+		logs = [];
+		node = node.clear();
+		miner = miner.clear();
+
+		await spawnProgram(program, args);
+		node.jobId = checkNode();
+		await checkChain(endpoint);
+	}
+
+	async function stopNode() {
+		node = node.stop();
+		if (api && api.isConnected) {
+			await api.disconnect();
 		}
+		if (node.jobId) {
+			clearInterval(node.jobId);
+		}
+		if (child) {
+			await child.kill();
+		}
+		node.jobId = null;
 	}
 </script>
 
@@ -123,10 +132,16 @@
 			/>
 		</aside>
 		<div class="w-full px-4">
-			{#if sidebarNavItems[selected].path === '/main/node'}
-				<Node {status} {handleNode} {logs} {lhr} {nhr} />
-			{:else if sidebarNavItems[selected].path === '/main/dashboard'}
-				<Dashboard />
+			{#if sidebarNavItems[selected].path === '/main/hashcash'}
+				<Node
+					{node}
+					startNode={async () =>
+						await startNode('../node/hashcash', ['--dev', '--alice'], 'ws://localhost:9944')}
+					{stopNode}
+					{logs}
+					{miner}
+					{chain}
+				/>
 			{:else if sidebarNavItems[selected].path === '/main/setting'}
 				<Setting />
 			{/if}

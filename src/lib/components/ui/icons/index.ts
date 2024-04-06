@@ -1,5 +1,5 @@
 import Root from "./icons.svelte";
 
 export {
-	Root as Icons
+	Root as LucideIcon
 };
