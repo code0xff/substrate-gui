@@ -91,7 +91,7 @@
 
 	async function startHashcash(program: string, args: string[], endpoint: string) {
 		if (!isValidAddress(env.miner)) {
-			toast.warning('Invalid address');
+			toast.warning('Invalid miner address');
 			return;
 		}
 		node = node.start();
@@ -144,7 +144,7 @@
 
 	async function startP2Pool(program: string, args: string[], endpoint: string) {
 		if (!isValidAddress(p2pEnv.miner)) {
-			toast.warning('Invalid address');
+			toast.warning('Invalid miner address');
 			return;
 		}
 		p2pNode = p2pNode.start();
