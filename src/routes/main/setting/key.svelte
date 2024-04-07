@@ -1,43 +1,32 @@
 <script lang="ts">
 	import * as Card from '$lib/components/ui/card';
 	import { Button } from '@/lib/components/ui/button';
-	import { Command } from '@tauri-apps/api/shell';
+	import { readTextFile, writeTextFile } from '@tauri-apps/api/fs';
+	import { appConfigDir, downloadDir } from '@tauri-apps/api/path';
+	import { save } from '@tauri-apps/api/dialog';
 
 	let keys: string = '';
 
-	async function generateKeys(): Promise<void> {
-		const command = Command.sidecar('../node/hashcash', [
-			'key',
-			'generate',
-			'--output-type',
-			'json'
-		]);
-		const child = await command.execute();
-		if (child.code === 0) {
-			keys = JSON.stringify(JSON.parse(child.stdout), null, 2);
+	async function exportKey(): Promise<void> {
+		const appConfigDirPath = await appConfigDir();
+		const key = await readTextFile(`${appConfigDirPath}/key.json`);
+		const downloadDirPath = await downloadDir();
+		const filePath = await save({ defaultPath: `${downloadDirPath}/key.json` });
+		if (filePath) {
+			await writeTextFile(filePath, key);
 		}
-	}
-
-	function clearKeys(): void {
-		keys = '';
 	}
 </script>
 
 <Card.Root>
 	<Card.Header>
-		<Card.Title>Minder key</Card.Title>
-		<Card.Description
-			>Generated miner key is provided temporarily and should be backed up if you want to continue
-			using it. <br />*We recommend using wallet to generate key.</Card.Description
+		<Card.Title>Key</Card.Title>
+		<Card.Description>You can import this key into polkadot.js with your password.</Card.Description
 		>
 	</Card.Header>
 	<Card.Content>
 		<div>
-			<Button
-				variant={keys ? 'default' : 'outline'}
-				on:click={keys ? clearKeys : generateKeys}
-				class="w-full">{keys ? 'Clear' : 'Generate'} key</Button
-			>
+			<Button variant={'outline'} on:click={exportKey} class="w-full">Export key</Button>
 		</div>
 		<div class="pt-4">
 			<pre class="text-xs text-muted-foreground">{keys}</pre>

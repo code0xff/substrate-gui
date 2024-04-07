@@ -13,12 +13,16 @@
 	import crypto from 'crypto-js';
 	import { _ } from 'svelte-i18n';
 
+	import { mnemonicGenerate } from '@polkadot/util-crypto';
+	import Keyring from '@polkadot/keyring';
+
 	let password: string = '';
 	let confirmPassword: string = '';
 	let passwordStrength: number = 0;
 	let passwordMessage: string = $_('signup.password.message.default');
 	let confirmMessage: string = $_('signup.confirm.message.default');
 	let passwordValid: boolean = false;
+	let processing: boolean = false;
 
 	function checkPassword() {
 		if (password.length > 0) {
@@ -65,9 +69,11 @@
 	}
 
 	async function confirm() {
+		processing = true;
 		if (verifyPassword()) {
 			await initialize();
 		} else {
+			processing = false;
 			toast.error($_('signup.confirm.toast.error'));
 		}
 	}
@@ -81,6 +87,25 @@
 			`${appConfigDirPath}/config.json`,
 			JSON.stringify({ password: crypto.SHA256(password).toString() })
 		);
+
+		const mnemonic = mnemonicGenerate();
+		const keyring = new Keyring();
+		const keyringPair = keyring.addFromUri(mnemonic);
+		await writeTextFile(
+			`${appConfigDirPath}/key.json`,
+			JSON.stringify(keyringPair.toJson(password))
+		);
+
+		const address = keyringPair.address;
+		await writeTextFile(
+			`${appConfigDirPath}/hashcash.json`,
+			JSON.stringify({ miner: address, power: { value: 'min', label: 'Min' } })
+		);
+		await writeTextFile(
+			`${appConfigDirPath}/p2pool.json`,
+			JSON.stringify({ miner: address, power: { value: 'max', label: 'Max' } })
+		);
+
 		await goto('/main');
 	}
 
@@ -104,6 +129,7 @@
 						id="password"
 						type="password"
 						placeholder="password"
+						disabled={processing}
 						bind:value={password}
 						on:input={checkPassword}
 						on:keydown={passwordValid ? submit : null}
@@ -115,6 +141,7 @@
 						id="confirm"
 						type="password"
 						placeholder="confirm"
+						disabled={processing}
 						bind:value={confirmPassword}
 						on:keydown={passwordValid ? submit : null}
 					/>
@@ -126,7 +153,9 @@
 			</div>
 		</Card.Content>
 		<Card.Footer class="flex justify-end">
-			<Button class="w-full md:w-auto" on:click={confirm} disabled={!passwordValid}>Enter</Button>
+			<Button class="w-full md:w-auto" on:click={confirm} disabled={processing || !passwordValid}
+				>Enter</Button
+			>
 		</Card.Footer>
 	</Card.Root>
 	<Toaster />
