@@ -10,6 +10,9 @@ export class Environment {
     }
     if (!await exists(`${path}/${name}`)) {
       const env = new Environment('', { value: 'min', label: 'Min' });
+      if (name === 'p2pool.json') {
+        env.power = { value: 'max', label: 'Max' };
+      }
       await writeTextFile(`${path}/${name}`, JSON.stringify(env));
       return env;
     } else {

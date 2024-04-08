@@ -39,7 +39,7 @@
 			disabled={!node.on}
 			on:click={() => {
 				open(endpoint);
-			}}>Open Explore</Button
+			}}>Open Explorer</Button
 		>
 	</div>
 	<div class="w-full">
