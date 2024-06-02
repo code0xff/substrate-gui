@@ -61,6 +61,41 @@
 		}
 	}
 
+	function startDashboard() {
+		return setInterval(async () => {
+			let newItems = [];
+			for (const item of _dashboardItems) {
+				try {
+					const script = `
+						const api = await instance.getApi();
+						${item.script}
+						return this;
+					`;
+					const newItem = await Object.getPrototypeOf(async function () {})
+						.constructor(script)
+						.bind(item)();
+					newItems.push(newItem);
+				} catch (e: unknown) {
+					console.error({ e });
+					continue;
+				}
+			}
+			_dashboardItems = [...newItems];
+		}, 1000);
+	}
+
+	function stopDashboard() {
+		if (_dashboardJobId) {
+			clearInterval(_dashboardJobId);
+		}
+		let resetItems = [];
+		for (const item of _dashboardItems) {
+			const resetItem = item.reset();
+			resetItems.push(resetItem);
+		}
+		_dashboardItems = [...resetItems];
+	}
+
 	async function startNode() {
 		_instance = _instance.start();
 		_logs = [];
@@ -85,26 +120,7 @@
 
 		(globalThis as { instance?: any })['instance'] = _instance;
 
-		_dashboardJobId = setInterval(async () => {
-			let newItems = [];
-			for (const item of _dashboardItems) {
-				try {
-					const script = `
-						const api = await instance.getApi();
-						${item.script}
-						return this;
-					`;
-					const newItem = await Object.getPrototypeOf(async function () {})
-						.constructor(script)
-						.bind(item)();
-					newItems.push(newItem);
-				} catch (e: unknown) {
-					console.error({ e });
-					continue;
-				}
-			}
-			_dashboardItems = newItems;
-		}, 1000);
+		_dashboardJobId = startDashboard();
 	}
 
 	async function stopNode() {
@@ -112,11 +128,26 @@
 		if (_dashboardJobId) {
 			clearInterval(_dashboardJobId);
 		}
-		let resetItems = [];
-		for (const item of _dashboardItems) {
-			resetItems.push(item.reset());
+		stopDashboard();
+	}
+
+	function addDashboardItem(
+		title: string,
+		defaultContents: string,
+		defaultSubcontents: string,
+		script: string
+	) {
+		let onProcess: boolean = false;
+		if (_dashboardJobId) {
+			onProcess = true;
+			stopDashboard();
 		}
-		_dashboardItems = resetItems;
+		const item = DashboardItem.create(title, defaultContents, defaultSubcontents, script);
+		_dashboardItems.push(item);
+		_dashboardItems = [..._dashboardItems];
+		if (onProcess) {
+			startDashboard();
+		}
 	}
 </script>
 
@@ -140,7 +171,7 @@
 			{#if sidebarNavItems[_selected].path === '/main/node'}
 				<Node instance={_instance} {startNode} {stopNode} logs={_logs} />
 			{:else if sidebarNavItems[_selected].path === '/main/dashboard'}
-				<Dashboard dashboardItems={_dashboardItems} />
+				<Dashboard dashboardItems={_dashboardItems} {addDashboardItem} />
 			{:else if sidebarNavItems[_selected].path === '/main/setting'}
 				<Setting />
 			{/if}

@@ -4,13 +4,32 @@
 	import * as Dialog from '@/lib/components/ui/dialog';
 	import { Input } from '@/lib/components/ui/input';
 	import Label from '@/lib/components/ui/label/label.svelte';
+	import { Textarea } from '@/lib/components/ui/textarea';
 
 	export let dashboardItems: any[];
+	export let addDashboardItem: (
+		title: string,
+		defaultContents: string,
+		defaultSubcontents: string,
+		script: string
+	) => void;
+
+	let open: boolean = false;
+
+	let title: string = '';
+	let defaultContents: string = '';
+	let defaultSubcontents: string = '';
+	let script: string = '';
+
+	async function submit() {
+		addDashboardItem(title, defaultContents, defaultSubcontents, script);
+		open = false;
+	}
 </script>
 
 <div>
 	<div class="w-full">
-		<Dialog.Root>
+		<Dialog.Root bind:open>
 			<Dialog.Trigger class={buttonVariants({ variant: 'outline' }) + ' w-full'}
 				>Add card</Dialog.Trigger
 			>
@@ -24,29 +43,29 @@
 						<Label>Title</Label>
 					</div>
 					<div class="pt-2">
-						<Input class="w-full" />
+						<Input class="w-full" bind:value={title} />
 					</div>
 					<div class="pt-4">
 						<Label>Default contents</Label>
 					</div>
 					<div class="pt-2">
-						<Input class="w-full" />
+						<Input class="w-full" bind:value={defaultContents} />
 					</div>
 					<div class="pt-4">
 						<Label>Default subcontents</Label>
 					</div>
 					<div class="pt-2">
-						<Input class="w-full" />
+						<Input class="w-full" bind:value={defaultSubcontents} />
 					</div>
 					<div class="pt-4">
 						<Label>Script</Label>
 					</div>
 					<div class="pt-2">
-						<Input class="w-full h-24" />
+						<Textarea class="h-24 w-full resize-none" bind:value={script} />
 					</div>
 				</div>
 				<Dialog.Footer>
-					<Button type="submit">Submit</Button>
+					<Button type="submit" on:click={submit}>Submit</Button>
 				</Dialog.Footer>
 			</Dialog.Content>
 		</Dialog.Root>

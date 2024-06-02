@@ -19,6 +19,7 @@ export class NodeInstance {
     public async stop(): Promise<NodeInstance> {
         if (this.api && this.api.isConnected) {
             await this.api.disconnect();
+            delete this.api;
         }
         if (this.jobId) {
             clearInterval(this.jobId);
