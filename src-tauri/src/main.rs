@@ -10,7 +10,7 @@ struct ProcessStatus {
 }
 
 #[tauri::command]
-async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
+async fn check_node_status(pid: u32) -> Result<ProcessStatus, String> {
     let mut system = sysinfo::System::new_all();
     system.refresh_all();
     system.refresh_all();
@@ -32,7 +32,7 @@ async fn check_status(pid: u32) -> Result<ProcessStatus, String> {
 
 fn main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![check_status])
+        .invoke_handler(tauri::generate_handler![check_node_status])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

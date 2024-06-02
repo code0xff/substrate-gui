@@ -7,7 +7,7 @@
     "distDir": "../public"
   },
   "package": {
-    "productName": "node-cli",
+    "productName": "substrate-gui",
     "version": "0.1.0"
   },
   "tauri": {
@@ -18,18 +18,20 @@
       "fs": {
         "all": true,
         "scope": [
-          "**"
+          "$APPCONFIG",
+          "$APPCONFIG/*"
         ]
       },
       "shell": {
         "sidecar": true,
         "scope": [
           {
-            "name": "../node/pocd",
+            "name": "../node/node",
             "sidecar": true,
             "args": true
           }
-        ]
+        ],
+        "open": true
       }
     },
     "bundle": {
@@ -40,7 +42,7 @@
         "depends": []
       },
       "externalBin": [
-        "../node/pocd"
+        "../node/node"
       ],
       "icon": [
         "icons/32x32.png",
@@ -49,7 +51,7 @@
         "icons/icon.icns",
         "icons/icon.ico"
       ],
-      "identifier": "node-cli",
+      "identifier": "substrate-gui",
       "longDescription": "",
       "macOS": {
         "entitlements": null,
@@ -78,7 +80,7 @@
         "fullscreen": false,
         "height": 600,
         "resizable": true,
-        "title": "node-cli",
+        "title": "substrate-gui",
         "width": 800
       }
     ]

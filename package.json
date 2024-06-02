@@ -1,5 +1,5 @@
 {
-	"name": "node-cli",
+	"name": "substrate-gui",
 	"version": "0.0.1",
 	"private": true,
 	"scripts": {
@@ -43,6 +43,7 @@
 	},
 	"type": "module",
 	"dependencies": {
+		"@polkadot/api": "^11.2.1",
 		"bits-ui": "^0.13.6",
 		"check-password-strength": "^2.0.7",
 		"clsx": "^2.1.0",

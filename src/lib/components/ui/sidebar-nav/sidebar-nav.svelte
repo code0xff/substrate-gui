@@ -2,7 +2,9 @@
 	import { cn } from '$lib/utils';
 	import { Button } from '$lib/components/ui/button';
 	import Icons from '../icons/icons.svelte';
+
 	let className: string | undefined | null = undefined;
+	
 	export let selected: number;
 	export let selectMenu: (index: number) => void;
 	export let items: { path: string; title: string; icon: string }[];

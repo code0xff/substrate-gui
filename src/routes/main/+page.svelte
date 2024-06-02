@@ -2,132 +2,146 @@
 	import { SidebarNav } from '$lib/components/ui/sidebar-nav';
 	import { Separator } from '$lib/components/ui/separator';
 	import { Toaster } from '$lib/components/ui/sonner';
-	import { NodeStatus } from '$lib/types';
-
-	import { invoke } from '@tauri-apps/api/tauri';
-	import { toast } from 'svelte-sonner';
+	import { NodeInstance } from '$lib/types';
 	import { _ } from 'svelte-i18n';
-
 	import Node from './node/+page.svelte';
 	import Dashboard from './dashboard/+page.svelte';
 	import Setting from './setting/+page.svelte';
+	import { Command } from '@tauri-apps/api/shell';
+	import { invoke } from '@tauri-apps/api/tauri';
+	import { sidebarNavItems } from './menu';
+	import { DashboardItem } from '@/lib/types/dashboard';
 
-	import { Command, Child } from '@tauri-apps/api/shell';
+	let _selected: number = 0;
+	let _instance: NodeInstance = NodeInstance.create();
+	let _dashboardJobId: NodeJS.Timeout;
+	let _logs: string[] = [];
 
-	const sidebarNavItems = [
-		{
-			title: 'Node',
-			path: '/main/node',
-			description: 'Node controller',
-			icon: 'network'
-		},
-		{
-			title: 'Dashboard',
-			path: '/main/dashboard',
-			description: 'Dashboard for node',
-			icon: 'layout-dashboard'
-		},
-		{
-			title: 'Setting',
-			path: '/main/setting',
-			description: 'Node client setting',
-			icon: 'cog'
-		}
+	let _dashboardItems: DashboardItem[] = [
+		DashboardItem.create(
+			'Best block',
+			'0',
+			'Block hash: 0x0000...0000',
+			`
+				const bestHeight = (await api.query.system.number()).toString();
+				this.contents = bestHeight;
+				const bestHash = (await api.rpc.chain.getBlockHash(parseInt(bestHeight))).toString();
+				const displayedHash = bestHash.slice(0, 6) + "..." + bestHash.slice(-4);
+				this.subContents = "Block hash: " + displayedHash;
+				`
+		),
+		DashboardItem.create(
+			'Timestamp',
+			'0',
+			'0',
+			`
+				const currentTimestamp = (await api.query.timestamp.now()).toHuman(); 
+				if (currentTimestamp !== this.contents) {
+					this.subContents = this.contents;
+					this.contents = currentTimestamp;
+				}
+				`
+		)
 	];
-	let selected: number = 0;
 
-	let status: NodeStatus = NodeStatus.default();
-	let logs: string[] = [];
-	let lhr: number = 0;
-	let nhr: number = 0;
-	let child: Child;
-
-	async function handleLog(log: string) {
-		while (logs.length >= 50) {
+	function appendLog(logs: string[], log: string): string[] {
+		while (logs.length >= 100) {
 			logs.pop();
 		}
 		logs.unshift(log);
-		logs = [...logs];
+		return logs;
+	}
 
-		if (log.indexOf('Local hashrate: ') !== -1 && log.indexOf('network hashrate: ') !== -1) {
-			let index = log.indexOf('Local hashrate: ') + 'Local hashrate: '.length;
-			lhr = parseFloat(log.slice(index, log.indexOf(' H/s')));
-
-			index = log.indexOf('network hashrate: ') + 'network hashrate: '.length;
-			nhr = parseFloat(log.slice(index, log.indexOf(' H/s', index)));
+	async function checkNodeStatus(instance: NodeInstance): Promise<NodeInstance> {
+		if (instance.child) {
+			let newStatus = await invoke<NodeInstance>('check_node_status', { pid: instance.child.pid });
+			return instance.update(newStatus);
+		} else {
+			throw new Error('Node did not started');
 		}
 	}
 
-	async function handleNode() {
-		status.on = !status.on;
-		if (status.on) {
-			logs = [];
-			status.cpuUsage = 0.0;
-			status.memory = 0;
-			status.startTime = 0;
-			lhr = 0;
-			nhr = 0;
+	async function startNode() {
+		_instance = _instance.start();
+		_logs = [];
 
-			const command = Command.sidecar('../node/pocd', ['--dev', '--disable-weak-subjectivity']);
-			command.stdout.on('data', handleLog);
-			command.stderr.on('data', handleLog);
+		const command = Command.sidecar('../node/node', ['--dev']);
+		command.stdout.on('data', async (log: string) => {
+			_logs = appendLog(_logs, log);
+		});
+		command.stderr.on('data', async (log: string) => {
+			_logs = appendLog(_logs, log);
+		});
+		_instance.child = await command.spawn();
+		_instance.jobId = setInterval(async () => {
+			try {
+				_instance = await checkNodeStatus(_instance);
+			} catch (e: any) {
+				console.error(`Failed to check node. e: ${e}`);
+			}
+		}, 1000);
 
-			child = await command.spawn();
-			console.log(child.pid);
+		_instance.endpoint = 'ws://localhost:9944';
 
-			status.iid = setInterval(async () => {
+		(globalThis as { instance?: any })['instance'] = _instance;
+
+		_dashboardJobId = setInterval(async () => {
+			let newItems = [];
+			for (const item of _dashboardItems) {
 				try {
-					const { cpuUsage, memory, startTime } = await invoke<NodeStatus>('check_status', {
-						pid: child.pid
-					});
-					status.cpuUsage = cpuUsage;
-					status.memory = memory;
-					status.startTime = startTime;
-				} catch (e: any) {
-					if (status.iid !== 0) {
-						clearInterval(status.iid);
-					}
-					status.iid = 0;
-
-					console.error(e);
-					toast.error($_('main.handle_node.toast.error'));
+					const script = `
+						const api = await instance.getApi();
+						${item.script}
+						return this;
+					`;
+					const newItem = await Object.getPrototypeOf(async function () {})
+						.constructor(script)
+						.bind(item)();
+					newItems.push(newItem);
+				} catch (e: unknown) {
+					console.error({ e });
+					continue;
 				}
-			}, 1000);
-		} else {
-			if (status.iid !== 0) {
-				clearInterval(status.iid);
 			}
-			if (child) {
-				await child.kill();
-			}
+			_dashboardItems = newItems;
+		}, 1000);
+	}
 
-			status.iid = 0;
+	async function stopNode() {
+		_instance = await _instance.stop();
+		if (_dashboardJobId) {
+			clearInterval(_dashboardJobId);
 		}
+		let resetItems = [];
+		for (const item of _dashboardItems) {
+			resetItems.push(item.reset());
+		}
+		_dashboardItems = resetItems;
 	}
 </script>
 
 <div class="p-4">
 	<div class="px-4">
-		<h3 class="text-lg font-medium">{sidebarNavItems[selected].title}</h3>
-		<p class="text-sm text-muted-foreground">{sidebarNavItems[selected].description}</p>
+		<h3 class="text-lg font-medium">{sidebarNavItems[_selected].title}</h3>
+		<p class="text-sm text-muted-foreground">{sidebarNavItems[_selected].description}</p>
 	</div>
 	<Separator class="my-2" />
 	<div class="flex flex-row">
 		<aside class="lg:w-[320px]">
 			<SidebarNav
 				items={sidebarNavItems}
-				{selected}
+				selected={_selected}
 				selectMenu={(index) => {
-					selected = index;
+					_selected = index;
 				}}
 			/>
 		</aside>
 		<div class="w-full px-4">
-			{#if sidebarNavItems[selected].path === '/main/node'}
-				<Node {status} {handleNode} {logs} {lhr} {nhr} />
-			{:else if sidebarNavItems[selected].path === '/main/dashboard'}
-				<Dashboard />
-			{:else if sidebarNavItems[selected].path === '/main/setting'}
+			{#if sidebarNavItems[_selected].path === '/main/node'}
+				<Node instance={_instance} {startNode} {stopNode} logs={_logs} />
+			{:else if sidebarNavItems[_selected].path === '/main/dashboard'}
+				<Dashboard dashboardItems={_dashboardItems} />
+			{:else if sidebarNavItems[_selected].path === '/main/setting'}
 				<Setting />
 			{/if}
 		</div>
